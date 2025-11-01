@@ -85,24 +85,13 @@ Nếu chỉ dùng Hash Table:
 
 #### 1.4.1. Cấu trúc liên hệ
 
-```text
-Contact
-├── name: string
-├── phone: string
-├── email: string
-└── address: string
-```
+![so_do](contact.png)
 
 Đây là thực thể trung tâm. Mọi cấu trúc khác (BST, Hash) **không sao chép** toàn bộ dữ liệu mà chỉ **giữ con trỏ** (pointer) trỏ tới `Contact` này. Làm vậy sẽ tránh bị lệch dữ liệu khi cập nhật.
 
 #### 1.4.2. Cấu trúc cây BST theo tên
 
-```text
-BSTNode
-├── data: Contact*   (trỏ tới liên hệ thật)
-├── left: BSTNode*
-└── right: BSTNode*
-```
+![so_do](bst_contact.png)
 
 Khóa sắp xếp: `toLower(name)` để tránh phân biệt hoa/thường. Khi cần in danh bạ theo tên thì chỉ cần duyệt in-order:
 
@@ -111,13 +100,7 @@ Khóa sắp xếp: `toLower(name)` để tránh phân biệt hoa/thường. Khi 
 
 #### 1.4.3. Cấu trúc bảng băm theo số điện thoại
 
-```text
-HashTable
-├── bucket[0]
-├── bucket[1]
-├── ...
-└── bucket[m-1]
-```
+![so_do](ba_cham.png)
 
 Trong đó mỗi `bucket[i]` là **danh sách các Contact*** có mã băm trùng nhau (chaining). Kích thước bảng có thể chọn số nguyên tố, ví dụ 101 hoặc 1009 để giảm va chạm.
 
@@ -178,22 +161,9 @@ Lợi ích: từ đây về sau có thể truy cập cùng một liên hệ bằ
 
 Làm như vậy để **đảm bảo dữ liệu luôn đồng bộ trong 2 cấu trúc**.
 
-### 1.6. Sơ đồ tổng quan (mô tả bằng chữ)
+### 1.6. Sơ đồ tổng quan
 
-```text
-               +----------------+
-               |    Contact     |
-               | (thực thể gốc) |
-               +----------------+
-                 ^            ^
-                 |            |
-     lưu theo TÊN|            |lưu theo SỐ ĐIỆN THOẠI
-                 |            |
-        +----------------+    +------------------+
-        |     BST        |    |    Hash Table    |
-        | key = name     |    | key = phone      |
-        +----------------+    +------------------+
-```
+![so_do](sodo_case.png)
 
 * BST chịu trách nhiệm **thứ tự và duyệt in ra màn hình**.
 * Hash Table chịu trách nhiệm **tìm nhanh**.
