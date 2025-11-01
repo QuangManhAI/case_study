@@ -163,7 +163,7 @@ Làm như vậy để **đảm bảo dữ liệu luôn đồng bộ trong 2 cấ
 
 ### 1.6. Sơ đồ tổng quan
 
-![so_do](sodo_case.png)
+![so_do](sodo_case_1.png)
 
 * BST chịu trách nhiệm **thứ tự và duyệt in ra màn hình**.
 * Hash Table chịu trách nhiệm **tìm nhanh**.
