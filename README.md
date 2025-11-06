@@ -720,27 +720,155 @@ int main() {
 
 ### 2.2. Đánh giá hiệu năng
 
-1. Kịch bản thử nghiệm
+Kết quả thực nghiệm thể hiện sự khác biệt rõ rệt giữa hai cấu trúc dữ liệu **Binary Search Tree (BST)** và **Hash Table** khi xử lý các thao tác cơ bản trên tập dữ liệu có quy mô từ 20.000 đến 100.000 phần tử. Các phép đo được thực hiện với ba thao tác chính: chèn (Insert), tìm kiếm (Search) và xoá (Remove).
 
-* Thử với 10 bản ghi: dùng để demo nhanh.
-* Thử với 100 bản ghi: kiểm tra xem tốc độ thêm và tìm có còn mượt không.
-* Thử với 1.000 bản ghi: mô phỏng danh bạ lớn hơn.
+| N (liên hệ) | BST_Insert | BST_Search | BST_Remove | Hash_Insert | Hash_Search | Hash_Remove |
+| ----------- | ---------- | ---------- | ---------- | ----------- | ----------- | ----------- |
+| 20,000      | 130        | 5          | 4          | 44          | 2           | 2           |
+| 40,000      | 254        | 5          | 5          | 185         | 4           | 4           |
+| 60,000      | 404        | 6          | 6          | 480         | 8           | 8           |
+| 80,000      | 533        | 6          | 7          | 1070        | 22          | 43          |
+| 100,000     | 708        | 6          | 6          | 1734        | 23          | 22          |
 
-2. Kết quả quan sát
+**Phân tích:**
 
-* Thêm liên lạc: diễn ra nhanh ở cả ba mức dữ liệu, vì BST trung bình O(log n) và Hash O(1).
-* Tìm theo số điện thoại: luôn nhanh, do tra cứu từ bảng băm.
-* In toàn bộ: thời gian tỷ lệ tuyến tính với số lượng liên hệ, phù hợp vì phải duyệt toàn bộ BST.
-* Xóa và cập nhật: dữ liệu giữa BST và Hash luôn đồng bộ nếu thực hiện theo đúng trình tự đã mô tả ở phần 1.
+* **BST:** Các thao tác Insert, Search và Remove có độ tăng tuyến tính nhẹ, duy trì ổn định đến quy mô 100.000 phần tử. Nhờ dữ liệu ngẫu nhiên nên cấu trúc cây không bị lệch đáng kể, hiệu năng vẫn ổn định quanh 5–7 ms cho các thao tác tìm kiếm và xoá.
+* **Hash Table:** Ở quy mô nhỏ (20.000–60.000), hiệu năng vượt trội so với BST, đặc biệt ở thao tác tìm kiếm chỉ mất 2–8 ms. Tuy nhiên, khi dữ liệu vượt 80.000, thời gian Insert và Remove tăng mạnh (đến 1.7 giây ở 100.000 phần tử) do **tải trọng bảng băm (load factor)** cao và xung đột băm nhiều hơn.
 
-3. Đánh giá lý thuyết
+**Kết luận:**
 
-* Thêm: O(log n) + O(1)
-* Tìm theo tên: O(log n) trung bình
-* Tìm theo số: O(1) trung bình
-* Xóa: O(log n) (BST) + O(1) (Hash)
-* In: O(n)
+* Với dữ liệu nhỏ và trung bình, **Hash Table** cho hiệu năng vượt trội nhờ độ phức tạp trung bình O(1).
+* Khi quy mô lớn, **BST** duy trì tốc độ ổn định và không bị suy giảm do xung đột, thích hợp cho ứng dụng cần tính ổn định và duy trì thứ tự dữ liệu.
+* Tổng thể, Hash Table là lựa chọn tối ưu cho tra cứu nhanh, trong khi BST phù hợp hơn cho dữ liệu lớn và các tác vụ cần sắp xếp.
 
-### 2.3. Kết luận phần 2
+---
 
-Phần cài đặt đã thể hiện rõ việc sử dụng hai cấu trúc dữ liệu đã chọn trong đề: BST để tổ chức và sắp xếp dữ liệu theo tên, và Hash Table để tra cứu nhanh theo số điện thoại. Kết quả thử nghiệm với các bộ dữ liệu khác nhau cho thấy hiệu năng đáp ứng tốt yêu cầu của một sổ địa chỉ cá nhân. Đây là cơ sở để sang phần 3 (trình bày và demo).
+### 2.3. Mã nguồn kiểm thử hiệu năng
+
+```cpp
+#include <bits/stdc++.h>
+#include <chrono>
+using namespace std;
+#include "_.cpp"
+
+string randomName(int len = 6) {
+    static const string letters = "abcdefghijklmnopqrstuvwxyz";
+    string s; for (int i = 0; i < len; i++) s += letters[rand() % letters.size()];
+    return s;
+}
+string randomPhone() {
+    string s = "0"; for (int i = 1; i < 10; i++) s += to_string(rand() % 10);
+    return s;
+}
+string randomAddress() {
+    static const string city[] = {"Hanoi", "Saigon", "Danang", "Hue", "CanTho"};
+    return city[rand() % 5];
+}
+
+int main() {
+    srand(time(0)); ios::sync_with_stdio(false); cin.tie(nullptr);
+    vector<int> testSizes = {20000, 40000, 60000, 80000, 100000};
+    ofstream fout("result.csv");
+    fout << "N,BST_Insert,BST_Search,BST_Remove,Hash_Insert,Hash_Search,Hash_Remove\n"; fout.close();
+
+    cout << left << setw(10) << "N"
+         << setw(15) << "BST_Insert" << setw(15) << "BST_Search" << setw(15) << "BST_Remove"
+         << setw(15) << "Hash_Insert" << setw(15) << "Hash_Search" << setw(15) << "Hash_Remove" << "\n";
+    cout << string(90, '=') << "\n";
+
+    for (int N : testSizes) {
+        BSTNode* root = nullptr; initTable();
+        vector<Contact*> contacts; contacts.reserve(N);
+
+        auto start = chrono::high_resolution_clock::now();
+        for (int i = 0; i < N; i++) {
+            Contact* c = new Contact{randomName(), randomPhone(), randomAddress(), nullptr};
+            root = insertBSTContact(root, c); contacts.push_back(c);
+        }
+        auto end = chrono::high_resolution_clock::now();
+        auto bst_insert_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+        start = chrono::high_resolution_clock::now();
+        for (int i = 0; i < N; i++) insertHashContact(contacts[i]);
+        end = chrono::high_resolution_clock::now();
+        auto hash_insert_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+        start = chrono::high_resolution_clock::now();
+        for (int i = 0; i < 1000; i++) findContact(root, contacts[rand()%contacts.size()]->ten);
+        end = chrono::high_resolution_clock::now();
+        auto bst_search_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+        start = chrono::high_resolution_clock::now();
+        for (int i = 0; i < 1000; i++) searchByPhone(contacts[rand()%contacts.size()]->soDienThoai);
+        end = chrono::high_resolution_clock::now();
+        auto hash_search_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+        start = chrono::high_resolution_clock::now();
+        for (int i = 0; i < 1000; i++) {
+            string name = contacts[rand()%contacts.size()]->ten; Contact* r=nullptr;
+            root = removeContact(root, name, r);
+        }
+        end = chrono::high_resolution_clock::now();
+        auto bst_remove_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+        start = chrono::high_resolution_clock::now();
+        for (int i = 0; i < 1000; i++) removeByPhone(contacts[rand()%contacts.size()]->soDienThoai);
+        end = chrono::high_resolution_clock::now();
+        auto hash_remove_time = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+
+        cout << left << setw(10) << N << setw(15) << bst_insert_time << setw(15) << bst_search_time
+             << setw(15) << bst_remove_time << setw(15) << hash_insert_time << setw(15)
+             << hash_search_time << setw(15) << hash_remove_time << "\n";
+
+        fout.open("result.csv", ios::app);
+        fout << N << "," << bst_insert_time << "," << bst_search_time << "," << bst_remove_time
+             << "," << hash_insert_time << "," << hash_search_time << "," << hash_remove_time << "\n";
+        fout.close();
+    }
+    return 0;
+}
+```
+
+---
+
+### 2.4. Biểu đồ hiệu năng
+
+Mã Python dùng để vẽ biểu đồ từ file CSV:
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("result.csv", header=0)
+
+plt.figure(figsize=(9,5))
+plt.plot(df["N"], df["BST_Insert"], marker='o', label="BST Insert")
+plt.plot(df["N"], df["BST_Search"], marker='o', label="BST Search")
+plt.plot(df["N"], df["BST_Remove"], marker='o', label="BST Remove")
+plt.plot(df["N"], df["Hash_Insert"], marker='s', label="Hash Insert")
+plt.plot(df["N"], df["Hash_Search"], marker='s', label="Hash Search")
+plt.plot(df["N"], df["Hash_Remove"], marker='s', label="Hash Remove")
+
+plt.xlabel("Số lượng liên hệ (N)")
+plt.ylabel("Thời gian (ms)")
+plt.title("Hiệu năng BST vs Hash Table")
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.savefig("performance_chart.png", dpi=200)
+print("Đã lưu biểu đồ vào performance_chart.png")
+```
+
+Kết quả thu được là biểu đồ biểu diễn thời gian trung bình (ms) theo số lượng phần tử N, cho phép quan sát trực quan sự khác biệt giữa BST và Hash Table ở các thao tác Insert, Search và Remove.
+
+![bieu_do](performance_chart.png)
+
+---
+
+### 2.5. Kịch bản thực nghiệm
+
+1. Sinh dữ liệu ngẫu nhiên (tên, số điện thoại, địa chỉ) theo quy mô N.
+2. Chèn toàn bộ dữ liệu vào BST và Hash Table.
+3. Thực hiện 1000 lần tìm kiếm và xoá ngẫu nhiên để đo thời gian trung bình.
+4. Ghi toàn bộ kết quả ra file `result.csv` và sinh biểu đồ bằng Python.
+5. Phân tích dữ liệu thu được để rút ra kết luận về đặc trưng hiệu năng từng cấu trúc dữ liệu.
