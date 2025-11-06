@@ -357,18 +357,22 @@ Mục đích của phần cài đặt là chuyển toàn bộ thiết kế ở p
 
 #### 2.1.1. Các cấu trúc chính
 
-1. Cấu trúc liên hệ
+1. **Cấu trúc liên hệ**
 
 ```cpp
 struct Contact {
-    string name;
-    string phone;
-    string email;
-    string address;
+    string ten;
+    string soDienThoai;
+    string diaChi;
+    Contact* next;
 };
 ```
 
-2. Nút cây BST theo tên
+Cấu trúc `Contact` lưu trữ thông tin của từng liên hệ trong danh bạ. Con trỏ `next` được dùng để liên kết các phần tử trong danh sách của bảng băm.
+
+---
+
+2. **Nút cây BST (Binary Search Tree)**
 
 ```cpp
 struct BSTNode {
@@ -379,45 +383,52 @@ struct BSTNode {
 };
 ```
 
-BST dùng để:
+Cây BST được sử dụng để quản lý và sắp xếp danh bạ theo **tên**. Các thao tác chính:
 
-* chèn theo tên,
-* tìm theo tên,
-* xóa theo tên,
-* và duyệt in-order để in danh bạ theo thứ tự.
+* Chèn liên hệ theo tên.
+* Tìm kiếm theo tên.
+* Xoá liên hệ theo tên.
+* Duyệt In-Order (LNR) để in danh bạ theo thứ tự tên tăng dần.
 
-3. Bảng băm theo số điện thoại
+---
 
-```cpp
-class HashTable {
-public:
-    static const int TABLE_SIZE = 101;
-    vector<list<Contact*>> table;
-    HashTable() { table.resize(TABLE_SIZE); }
-    int hashPhone(const string& phone);
-    void insert(Contact* c);
-    Contact* search(const string& phone);
-    bool remove(const string& phone);
-};
-```
-
-Hash Table dùng để:
-
-* tìm nhanh theo số điện thoại (trung bình O(1)),
-* xóa theo số điện thoại.
-
-4. Lớp quản lý sổ địa chỉ
+3. **Bảng băm (Hash Table)**
 
 ```cpp
-struct AddressBook {
-    BSTNode* root;
-    HashTable ht;
-    // các hàm: addContact, searchByName, searchByPhone,
-    // deleteByName, deleteByPhone, updateByName, printAll
-};
+const int hashSize = 101;
+Contact* hashTable[hashSize];
 ```
 
-Lớp này đóng vai trò “bao” để bên ngoài chỉ gọi một hàm nhưng bên trong sẽ tự đồng bộ cả BST và Hash.
+```cpp
+int hashPhone(const string& phone) {
+    long h = 0;
+    for (char c: phone) {
+        if (isdigit(c)) h = h * 10 + (c - '0');
+        else h = h * 131 + c; 
+    }
+    return (int)(h % hashSize);
+}
+```
+
+Các thao tác chính trên bảng băm:
+
+* **insertContact(Contact*)**: thêm liên hệ vào bucket tương ứng dựa trên giá trị băm của số điện thoại.
+* **searchByPhone(string)**: tìm liên hệ theo số điện thoại, trung bình O(1).
+* **removeByPhone(string)**: xoá liên hệ khỏi bucket tương ứng.
+
+Bảng băm sử dụng **phương pháp nối kết (separate chaining)** để xử lý xung đột.
+
+---
+
+4. **Tích hợp quản lý danh bạ**
+
+Không sử dụng lớp `AddressBook` như bản thiết kế ban đầu, chương trình hiện triển khai song song hai cấu trúc chính:
+
+* **BST** để quản lý và tìm kiếm theo *tên*.
+* **Hash Table** để tìm kiếm và xoá theo *số điện thoại*.
+
+Các thao tác như thêm, xoá hoặc cập nhật liên hệ đều đồng thời tác động đến cả hai cấu trúc, đảm bảo dữ liệu đồng bộ giữa cây và bảng băm.
+
 
 #### 2.1.2. Mã nguồn minh họa đầy đủ
 
