@@ -422,299 +422,174 @@ Lớp này đóng vai trò “bao” để bên ngoài chỉ gọi một hàm nh
 #### 2.1.2. Mã nguồn minh họa đầy đủ
 
 ```cpp
+// Thêm một liên hệ mới vào sổ địa chỉ.
+// Tìm kiếm liên hệ theo tên.
+// Tìm kiếm liên hệ theo số điện thoại.
+// Cập nhật thông tin của một liên hệ đã có.
+// Xóa một liên hệ khỏi sổ địa chỉ.
+// In ra toàn bộ danh bạ theo thứ tự tên đã sắp xếp.
+
 #include <bits/stdc++.h>
 using namespace std;
 
-string toLowerStr(string s) {
-    for (auto &ch : s) ch = tolower(ch);
-    return s;
-}
-
-struct Contact {
-    string name;
-    string phone;
-    string email;
-    string address;
+struct Contact
+{
+    /* data */
+    string ten;
+    string soDienThoai;
+    string diaChi;
+    Contact* next;
 };
 
-struct BSTNode {
+struct BSTNode
+{
+    /* data */
     Contact* data;
     BSTNode* left;
     BSTNode* right;
-    BSTNode(Contact* c): data(c), left(nullptr), right(nullptr) {}
+    BSTNode(Contact* key): data(key), left(nullptr), right(nullptr){};
 };
 
-BSTNode* findMin(BSTNode* root) {
-    while (root && root->left) root = root->left;
+string toLowerString(string str){
+    for (char &i : str) i = tolower(i);
+    return str;
+}
+
+// them mot lien he
+BSTNode* insertBSTContact(BSTNode* root, Contact* c){
+    if (!root) return new BSTNode(c);
+    string key = toLowerString(c->ten);
+    string cur = toLowerString(root->data->ten);
+    if (key < cur) root->left = insertBSTContact(root->left, c);
+    else if (key > cur) root->right = insertBSTContact(root->right, c);
     return root;
 }
 
-BSTNode* bstInsert(BSTNode* root, Contact* c) {
-    if (!root) return new BSTNode(c);
-    string key = toLowerStr(c->name);
-    string cur = toLowerStr(root->data->name);
-    if (key < cur) root->left = bstInsert(root->left, c);
-    else if (key > cur) root->right = bstInsert(root->right, c);
+// tim kiem lien he theo ten
+BSTNode* findContact(BSTNode* root, const string& name){
+    if (!root) return nullptr;
+    string key = toLowerString(name);
+    string cur = toLowerString(root->data->ten);
+    if (key == cur) return root;
+    else if (key < cur) return findContact(root->left, name);
+    else if (key > cur) return findContact(root->right, name);
     else {
-        cout << "Lien he da ton tai theo ten.
-";
+        return nullptr;
+    }
+}
+
+// tim min ben trai de the mang
+BSTNode* findMin(BSTNode* root){
+    while (root && root->left)
+    {
+        /* code */
+        root = root->left;
     }
     return root;
 }
-
-BSTNode* bstSearch(BSTNode* root, const string& name) {
+// xoa mot lien he
+BSTNode* removeContact(BSTNode* root, const string& name, Contact*& removed){
     if (!root) return nullptr;
-    string key = toLowerStr(name);
-    string cur = toLowerStr(root->data->name);
-    if (key == cur) return root;
-    if (key < cur) return bstSearch(root->left, name);
-    return bstSearch(root->right, name);
-}
-
-BSTNode* bstRemove(BSTNode* root, const string& name, Contact*& removed) {
-    if (!root) return nullptr;
-    string key = toLowerStr(name);
-    string cur = toLowerStr(root->data->name);
-    if (key < cur) {
-        root->left = bstRemove(root->left, name, removed);
-    } else if (key > cur) {
-        root->right = bstRemove(root->right, name, removed);
-    } else {
+    string key = toLowerString(name);
+    string cur = toLowerString(root->data->ten);
+    if (key < cur) root->left = removeContact(root->left, name, removed);
+    else if (key > cur) root->right = removeContact(root->right, name, removed);
+    else {
         removed = root->data;
-        if (!root->left) {
+        if (!root->left){
             BSTNode* r = root->right;
             delete root;
             return r;
-        } else if (!root->right) {
+        } 
+        else if (!root->right){
             BSTNode* l = root->left;
             delete root;
             return l;
-        } else {
-            BSTNode* tmp = findMin(root->right);
-            root->data = tmp->data;
-            Contact* dummy = nullptr;
-            root->right = bstRemove(root->right, tmp->data->name, dummy);
+        }
+        else {
+            BSTNode* temp = findMin(root->right);
+            root->data = temp->data;
+            Contact* changeNode = nullptr;
+            root->right = removeContact(root->right, temp->data->ten, changeNode);
         }
     }
     return root;
 }
 
-void bstInorder(BSTNode* root) {
+// LNR de duyet tang dan
+void printLNR(BSTNode* root){
     if (!root) return;
-    bstInorder(root->left);
-    cout << root->data->name << " | "
-         << root->data->phone << " | "
-         << root->data->email << " | "
-         << root->data->address << "
-";
-    bstInorder(root->right);
+    printLNR(root->left);
+    cout << left << root->data->ten << "|"<<setw(10)
+         << left << root->data->soDienThoai << "|"<<setw(10)
+         << left << root->data->diaChi << "|"<< endl;
+    printLNR(root->right); 
 }
 
-class HashTable {
-public:
-    static const int TABLE_SIZE = 101;
-    vector<list<Contact*>> table;
-    HashTable() { table.resize(TABLE_SIZE); }
-    int hashPhone(const string& phone) {
-        long long h = 0;
-        for (char c : phone) {
-            if (isdigit(c)) h = h * 10 + (c - '0');
-            else h = h * 131 + c;
-        }
-        return (int)(h % TABLE_SIZE);
-    }
-    void insert(Contact* c) {
-        int idx = hashPhone(c->phone);
-        for (auto *p : table[idx]) {
-            if (p->phone == c->phone) {
-                cout << "So dien thoai da ton tai.
-";
-                return;
-            }
-        }
-        table[idx].push_back(c);
-    }
-    Contact* search(const string& phone) {
-        int idx = hashPhone(phone);
-        for (auto *p : table[idx]) {
-            if (p->phone == phone) return p;
-        }
-        return nullptr;
-    }
-    bool remove(const string& phone) {
-        int idx = hashPhone(phone);
-        for (auto it = table[idx].begin(); it != table[idx].end(); ++it) {
-            if ((*it)->phone == phone) {
-                table[idx].erase(it);
-                return true;
-            }
-        }
-        return false;
-    }
-};
+// hashing
+const int hashSize = 101;
+Contact* hashTable[hashSize];
 
-struct AddressBook {
-    BSTNode* root;
-    HashTable ht;
-    AddressBook(): root(nullptr) {}
-
-    void addContact(const string& name, const string& phone,
-                    const string& email, const string& address) {
-        if (bstSearch(root, name)) {
-            cout << "Ten nay da ton tai, khong them.
-";
-            return;
-        }
-        Contact* c = new Contact{name, phone, email, address};
-        root = bstInsert(root, c);
-        ht.insert(c);
-        cout << "Da them lien he.
-";
+int hashPhone(const string& phone){
+    long h = 0;
+    for (char c: phone){
+        if (isdigit(c)) h = h * 10 + (c - '0');
+        else h = h * 131 + c; 
     }
-
-    Contact* searchByName(const string& name) {
-        BSTNode* node = bstSearch(root, name);
-        if (node) return node->data;
-        return nullptr;
-    }
-
-    Contact* searchByPhone(const string& phone) {
-        return ht.search(phone);
-    }
-
-    void deleteByName(const string& name) {
-        Contact* removed = nullptr;
-        root = bstRemove(root, name, removed);
-        if (removed) {
-            ht.remove(removed->phone);
-            delete removed;
-            cout << "Da xoa lien he theo ten.
-";
-        } else {
-            cout << "Khong tim thay ten.
-";
-        }
-    }
-
-    void deleteByPhone(const string& phone) {
-        Contact* c = ht.search(phone);
-        if (!c) {
-            cout << "Khong tim thay so dien thoai.
-";
-            return;
-        }
-        string name = c->name;
-        Contact* removed = nullptr;
-        root = bstRemove(root, name, removed);
-        ht.remove(phone);
-        if (removed) {
-            delete removed;
-            cout << "Da xoa lien he theo sdt.
-";
-        }
-    }
-
-    void updateByName(const string& name) {
-        BSTNode* node = bstSearch(root, name);
-        if (!node) {
-            cout << "Khong tim thay lien he.
-";
-            return;
-        }
-        Contact* c = node->data;
-        cout << "Nhap sdt moi (de trong neu giu): ";
-        string p; getline(cin, p);
-        cout << "Nhap email moi (de trong neu giu): ";
-        string e; getline(cin, e);
-        cout << "Nhap dia chi moi (de trong neu giu): ";
-        string a; getline(cin, a);
-        if (!p.empty() && p != c->phone) {
-            ht.remove(c->phone);
-            c->phone = p;
-            ht.insert(c);
-        }
-        if (!e.empty()) c->email = e;
-        if (!a.empty()) c->address = a;
-        cout << "Cap nhat thanh cong.
-";
-    }
-
-    void printAll() {
-        cout << "===== DANH BA =====
-";
-        bstInorder(root);
-    }
-};
-
-void showMenu() {
-    cout << "
-===== MENU =====
-";
-    cout << "1. Them lien he
-";
-    cout << "2. Tim theo ten
-";
-    cout << "3. Tim theo sdt
-";
-    cout << "4. Xoa theo ten
-";
-    cout << "5. Xoa theo sdt
-";
-    cout << "6. Cap nhat theo ten
-";
-    cout << "7. In danh ba
-";
-    cout << "0. Thoat
-";
-    cout << "Chon: ";
+    return (int)(h % hashSize);
 }
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    AddressBook ab;
-    while (true) {
-        showMenu();
-        int ch; if (!(cin >> ch)) break; cin.ignore();
-        if (ch == 0) break;
-        if (ch == 1) {
-            string name, phone, email, address;
-            cout << "Nhap ten: "; getline(cin, name);
-            cout << "Nhap sdt: "; getline(cin, phone);
-            cout << "Nhap email: "; getline(cin, email);
-            cout << "Nhap dia chi: "; getline(cin, address);
-            ab.addContact(name, phone, email, address);
-        } else if (ch == 2) {
-            string name; cout << "Nhap ten can tim: "; getline(cin, name);
-            Contact* c = ab.searchByName(name);
-            if (c) cout << c->name << " | " << c->phone << " | " << c->email << " | " << c->address << "
-";
-            else cout << "Khong tim thay.
-";
-        } else if (ch == 3) {
-            string phone; cout << "Nhap sdt can tim: "; getline(cin, phone);
-            Contact* c = ab.searchByPhone(phone);
-            if (c) cout << c->name << " | " << c->phone << " | " << c->email << " | " << c->address << "
-";
-            else cout << "Khong tim thay.
-";
-        } else if (ch == 4) {
-            string name; cout << "Nhap ten can xoa: "; getline(cin, name);
-            ab.deleteByName(name);
-        } else if (ch == 5) {
-            string phone; cout << "Nhap sdt can xoa: "; getline(cin, phone);
-            ab.deleteByPhone(phone);
-        } else if (ch == 6) {
-            string name; cout << "Nhap ten can cap nhat: "; getline(cin, name);
-            ab.updateByName(name);
-        } else if (ch == 7) {
-            ab.printAll();
-        } else {
-            cout << "Khong hop le.
-";
-        }
+void initTable(){
+    for (int i = 0; i < hashSize; i++){
+        hashTable[i] = nullptr;
     }
-    return 0;
+}
+
+void insertHashContact(Contact* c){
+    int idx = hashPhone(c->soDienThoai);
+    Contact* cur = hashTable[idx];
+    while (cur)
+    {
+        /* code */
+        if (cur->soDienThoai == c->soDienThoai){
+            return;
+        }
+        cur = cur->next;
+    }
+    c->next = hashTable[idx];
+    hashTable[idx] = c;
+}
+
+Contact* searchByPhone(const string& phone){
+    int idx = hashPhone(phone);
+    Contact* cur =  hashTable[idx];
+    while (cur)
+    {
+        /* code */
+        if (cur->soDienThoai == phone) return cur;
+        cur = cur->next;
+    }
+    return nullptr;
+}
+
+bool removeByPhone(const string& phone){
+    int idx = hashPhone(phone);
+    Contact* cur = hashTable[idx];
+    Contact* prev = nullptr;
+    
+    while (cur)
+    {
+        /* code */
+        if (cur->soDienThoai == phone){
+            if (prev) prev->next = cur->next;
+            else hashTable[idx] = cur->next;
+            delete cur;
+            return true;
+        }
+        prev = cur;
+        cur = cur->next;
+    }
+    return false;
 }
 ```
 
